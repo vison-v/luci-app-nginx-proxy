@@ -1,5 +1,5 @@
 msgid "Nginx Reverse Proxy"
-msgstr "Nginx 反向代理"
+msgstr "反向代理"
 
 msgid "Proxy Settings"
 msgstr "代理设置"
