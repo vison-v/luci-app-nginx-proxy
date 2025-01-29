@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk  
 
 LUCI_TITLE:=Nginx Proxy  
-LUCI_DEPENDS:=+nginx +acme.sh  
+LUCI_DEPENDS:=+nginx +acme  
 LUCI_PKGARCH:=all  
 
 PKG_NAME:=luci-app-nginx-proxy  
