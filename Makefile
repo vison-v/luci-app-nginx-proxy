@@ -1,40 +1,42 @@
-include $(TOPDIR)/rules.mk
+include $(TOPDIR)/rules.mk  
 
-PKG_NAME:=luci-app-nginx-proxy
-PKG_VERSION:=1.0
-PKG_RELEASE:=1
+LUCI_TITLE:=Nginx Proxy  
+LUCI_DEPENDS:=+nginx +acme.sh  
+LUCI_PKGARCH:=all  
 
-include $(INCLUDE_DIR)/package.mk
+PKG_NAME:=luci-app-nginx-proxy  
+PKG_VERSION:=1.2.0  
+PKG_RELEASE:=1  
 
-define Package/luci-app-nginx-proxy
-  SECTION:=luci
-  CATEGORY:=LuCI
-  SUBMENU:=3. Applications
-  TITLE:=Nginx Reverse Proxy Configuration
-  DEPENDS:=+luci +nginx +luci-i18n-base-zh-cn +acme
-endef
+include $(INCLUDE_DIR)/package.mk  
+include $(INCLUDE_DIR)/luci.mk  
 
-define Package/luci-app-nginx-proxy/description
-  A LuCI plugin to configure Nginx reverse proxy with SSL and ACME support.
-endef
+define Package/$(PKG_NAME)  
+  SECTION:=luci  
+  CATEGORY:=LuCI  
+  TITLE:=$(LUCI_TITLE)  
+  DEPENDS:=$(LUCI_DEPENDS)  
+endef  
 
-define Build/Configure
-endef
+define Package/$(PKG_NAME)/description  
+  Nginx reverse proxy configuration and management plugin, supports SSL and ACME automatic certificate management.  
+endef  
 
-define Build/Compile
-endef
+define Build/Compile  
+endef  
 
-define Package/luci-app-nginx-proxy/install
-    $(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-    $(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi
-    $(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/nginx-proxy
-    $(INSTALL_DIR) $(1)/etc/uci-defaults
+define Package/$(PKG_NAME)/install  
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller  
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi  
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view  
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n  
 
-    $(INSTALL_DATA) ./files/controller/nginx-proxy.lua $(1)/usr/lib/lua/luci/controller/
-    $(INSTALL_DATA) ./files/model/cbi/nginx-proxy.lua $(1)/usr/lib/lua/luci/model/cbi/
-    $(INSTALL_DATA) ./files/model/cbi/nginx-proxy-acme.lua $(1)/usr/lib/lua/luci/model/cbi/
-    $(INSTALL_DATA) ./files/view/nginx-proxy/log.htm $(1)/usr/lib/lua/luci/view/nginx-proxy/
-    $(INSTALL_DATA) ./files/view/nginx-proxy/ssl.htm $(1)/usr/lib/lua/luci/view/nginx-proxy/
-endef
+	$(INSTALL_DATA) ./src/controller/nginx_proxy.lua $(1)/usr/lib/lua/luci/controller/  
+	$(INSTALL_DATA) ./src/model/cbi/nginx_proxy.lua $(1)/usr/lib/lua/luci/model/cbi/  
+	$(INSTALL_DATA) ./src/view/nginx_proxy.htm $(1)/usr/lib/lua/luci/view/  
+    $(INSTALL_DATA) ./src/view/nginx_proxy_logs.htm $(1)/usr/lib/lua/luci/view/  
+	$(INSTALL_DATA) ./src/po/zh-cn.po $(1)/usr/lib/lua/luci/i18n/zh-cn/nginx_proxy.po  
+    $(INSTALL_DATA) ./src/po/zh_Hans.po $(1)/usr/lib/lua/luci/i18n/zh_Hans/nginx_proxy.po  
+endef  
 
-$(eval $(call BuildPackage,luci-app-nginx-proxy))
+$(eval $(call BuildPackage,$(PKG_NAME)))
