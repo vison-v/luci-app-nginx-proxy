@@ -194,4 +194,37 @@ function action_del_cron()
     luci.http.redirect(luci.dispatcher.build_url("admin/services/nginx-proxy/schedules"))
 end
 
--- 其他功能实现...
+-- 新增日志相关action
+function action_refreshlogs()
+    luci.http.redirect(luci.dispatcher.build_url("admin/services/nginx-proxy/logs"))
+end
+
+function action_downloadlogs()
+    local log_path = uci:get("nginx-proxy", "global", "log_path") or "/var/log/nginx/proxy.log"
+    if fs.access(log_path) then
+        luci.http.header("Content-Disposition", "attachment; filename=nginx-proxy.log")
+        luci.http.prepare_content("text/plain")
+        luci.http.write(fs.readfile(log_path))
+        return
+    end
+    luci.http.status(404, "Log file not found")
+end
+
+-- 增强版清空日志
+function action_clearlogs()
+    local log_path = uci:get("nginx-proxy", "global", "log_path") or "/var/log/nginx/proxy.log"
+    
+    if fs.access(log_path) then
+        -- 保留文件属性清空内容
+        local stat = fs.stat(log_path)
+        if fs.writefile(log_path, "") then
+            fs.chown(log_path, stat.uid, stat.gid)
+            fs.chmod(log_path, stat.mod)
+            luci.http.redirect(luci.dispatcher.build_url("admin/services/nginx-proxy/logs?status=1"))
+        else
+            luci.http.status(500, translate("Failed to clear logs"))
+        end
+    else
+        luci.http.status(404, translate("Log file not found"))
+    end
+end
