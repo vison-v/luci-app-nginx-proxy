@@ -238,3 +238,21 @@ msgstr "下载日志"
 #: applications/luci-app-nginx-proxy/luasrc/view/nginx-proxy/log_actions.htm:5
 msgid "Are you sure to clear all logs?"
 msgstr "确定要清空所有日志吗？"
+
+msgid "Schedules"
+msgstr "计划任务"
+
+msgid "Manage cron jobs for automatic certificate renewal and log rotation"
+msgstr "管理自动证书续期和日志轮转的定时任务"
+
+msgid "Cron Jobs"
+msgstr "定时任务"
+
+msgid "Format: minute hour day month week"
+msgstr "格式: 分 时 日 月 周"
+
+msgid "Renew Certificates"
+msgstr "续期证书"
+
+msgid "Rotate Logs"
+msgstr "轮转日志"
