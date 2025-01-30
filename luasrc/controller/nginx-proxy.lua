@@ -19,6 +19,18 @@ function index()
     entry({"admin", "services", "nginx-proxy", "add_cron"}, post("action_add_cron"))
     entry({"admin", "services", "nginx-proxy", "del_cron"}, post("action_del_cron"))
     entry({"admin", "services", "nginx-proxy", "downloadlogs"}, call("action_downloadlogs"))
+    entry({"admin", "services", "nginx-proxy", "acme", "logs"}, call("action_logs"))
+    entry({"admin", "services", "nginx-proxy", "acme", "revoke"}, post("action_revoke"))
+end
+
+function action_logs()
+    local log_path = "/var/log/acme.log"
+    if fs.access(log_path) then
+        http.prepare_content("text/plain")
+        http.write(fs.readfile(log_path) or "No logs available")
+    else
+        http.status(404, "Log file not found")
+    end
 end
 
 function generate_config()
