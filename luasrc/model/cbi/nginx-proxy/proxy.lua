@@ -87,6 +87,61 @@ function m.on_commit(self)
     -- 自动生成配置文件
     luci.sys.call("/usr/libexec/nginx-proxy/generate-config >/dev/null 2>&1")
 end
+-- 文件路径：luasrc/model/cbi/nginx-proxy/proxy.lua
+
+-- 端口智能默认（根据SSL状态自动切换80/443）
+function port.cfgvalue(self, section)
+    local value = m:get(section, "port") -- 尝试读取现有配置
+    if not value then
+        -- 如果未配置端口，根据SSL状态返回默认值
+        local ssl_enabled = uci:get("nginx-proxy", "ssl", "enabled") or "0"
+        return (ssl_enabled == "1") and "443" or "80"
+    end
+    return value
+end
+
+-- 证书路径智能填充（ACME自动化集成）
+function cert_path.cfgvalue(self, section)
+    local value = m:get(section, "cert_path")
+    if not value then
+        -- 如果启用了ACME且未配置证书路径
+        local acme_enabled = uci:get("nginx-proxy", "acme", "enabled") or "0"
+        if acme_enabled == "1" then
+            local domain = m:get(section, "domain")
+            return string.format(
+                "/etc/ssl/acme/%s_fullchain.cer", 
+                domain:gsub("%*", "wildcard")
+            )
+        end
+    end
+    return value
+end
+
+-- 协议关联超时默认（根据协议类型设置合理超时）
+m.on_parse = function(self)
+    uci:foreach("nginx-proxy", "proxy", function(s)
+        if s.proto and not s.proxy_read_timeout then
+            local timeouts = {
+                http = "60s",
+                websocket = "3600s", -- WebSocket长连接
+                grpc = "3600s"       -- gRPC流式通信
+            }
+            uci:set("nginx-proxy", s[".name"], "proxy_read_timeout", timeouts[s.proto])
+        end
+    end)
+end
+
+-- 健康检查路径智能默认（协议敏感型）
+function check_path.cfgvalue(self, section)
+    local path = m:get(section, "check_path")
+    if not path then
+        local proto = m:get(section, "proto") or "http"
+        return proto == "grpc" 
+            and "/grpc.health.v1.Health/Check" 
+            or "/health"
+    end
+    return path
+end
 -- 增强型域名验证
 function domain.validate(self, value)
     -- RFC 1034合规验证
