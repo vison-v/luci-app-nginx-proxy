@@ -1,20 +1,27 @@
-local m, s, o
+local uci = luci.model.uci.cursor()
+local sys = require "luci.sys"
 
-m = Map("nginx-proxy", translate("Scheduled Tasks"), 
-    translate("Manage automated certificate renewal schedules"))
+m = Map("nginx-proxy", translate("Scheduled Tasks"),
+    translate("Manage cron jobs for automatic certificate renewal and log rotation"))
 
-s = m:section(TypedSection, "schedules", translate("Cron Jobs"))
+s = m:section(TypedSection, "cron", translate("Cron Jobs"))
 s.template = "cbi/tblsection"
+s.anonymous = true
 s.addremove = true
-s.anonymous = false
 
-o = s:option(Value, "cron", translate("Cron Expression"))
-o.datatype = "string"
-o.rmempty = false
-o.description = translate("Example: 0 3 * * * (daily at 3am)")
+time = s:option(Value, "time", translate("Schedule"), 
+    translate("Format: minute hour day month week"))
+time.placeholder = "0 3 * * *"
+time.datatype = "crontime"
 
-o = s:option(Value, "command", translate("Command"))
-o.default = "/usr/lib/acme/acme.sh --cron"
-o.readonly = true
+command = s:option(Value, "command", translate("Command"))
+command.template = "cbi/cbi-value"
+command.size = 60
+command:value("/usr/libexec/nginx-proxy/renew-certs", translate("Renew Certificates"))
+command:value("/usr/libexec/nginx-proxy/rotate-logs", translate("Rotate Logs"))
+
+function m.on_commit(self)
+    sys.call("/etc/init.d/cron restart")
+end
 
 return m
