@@ -87,5 +87,45 @@ function m.on_commit(self)
     -- 自动生成配置文件
     luci.sys.call("/usr/libexec/nginx-proxy/generate-config >/dev/null 2>&1")
 end
+-- 增强型域名验证
+function domain.validate(self, value)
+    -- RFC 1034合规验证
+    if not value:match("^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]%.[a-zA-Z]{2,}$") then
+        return nil, translate("Invalid domain format (e.g. example.com)")
+    end
+    
+    -- 防止通配符滥用
+    if value:match("%*%.") and not value:match("^%*%.[a-zA-Z0-9-]+%.[a-zA-Z]{2,}$") then
+        return nil, translate("Wildcard domains must be in format *.example.com")
+    end
+    
+    return value
+end
 
+-- 增强型IP/CIDR验证
+function acl.validate(self, value)
+    local function is_ipv4_cidr(str)
+        return str:match("^(%d+%.%d+%.%d+%.%d+)/(%d+)$") and tonumber(str:match("/(%d+)$")) <= 32
+    end
+    
+    local function is_ipv6_cidr(str)
+        return str:match("^([%x:]+)/(%d+)$") and tonumber(str:match("/(%d+)$")) <= 128
+    end
+
+    for _, v in ipairs(value) do
+        if not (luci.ip.new(v) or is_ipv4_cidr(v) or is_ipv6_cidr(v)) then
+            return nil, translatef("Invalid IP/CIDR: %s", v)
+        end
+    end
+    return value
+end
+
+-- 高级协议验证
+function proto.validate(self, value, section)
+    local backend = m:get(section, "backend")
+    if value == "grpc" and not backend:match("^grpc?://") then
+        return nil, translate("gRPC backend must use grpc:// or grpcs:// protocol")
+    end
+    return value
+end
 return m
